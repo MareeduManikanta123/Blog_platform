@@ -1,0 +1,144 @@
+---
+title: "Authentication Strategies in Next.js"
+date: "2024-01-15"
+author: "Maria Garcia"
+tags: ["Authentication", "Security", "NextAuth", "JWT"]
+excerpt: "Implement secure authentication in your Next.js application using NextAuth.js and JWT tokens."
+---
+
+# Authentication Strategies in Next.js
+
+Authentication is essential for protecting user data and controlling access to your application. Let's explore the best practices.
+
+## NextAuth.js Setup
+
+NextAuth.js simplifies authentication setup:
+
+```bash
+npm install next-auth
+```
+
+Create your auth configuration:
+
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+
+export const authOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // Verify credentials against your database
+        const user = await verifyUser(
+          credentials?.email,
+          credentials?.password
+        )
+        return user || null
+      }
+    })
+  ],
+  pages: {
+    signIn: '/login',
+    error: '/login'
+  }
+}
+
+const handler = NextAuth(authOptions)
+export { handler as GET, handler as POST }
+```
+
+## Protected Routes with Middleware
+
+```typescript
+// middleware.ts
+import { withAuth } from "next-auth/middleware"
+
+export default withAuth(
+  function middleware(req) {
+    // Your middleware logic
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+)
+
+export const config = {
+  matcher: ["/dashboard/:path*", "/profile/:path*"]
+}
+```
+
+## Using Sessions in Components
+
+```tsx
+'use client'
+
+import { useSession, signIn, signOut } from "next-auth/react"
+
+export default function UserProfile() {
+  const { data: session } = useSession()
+
+  if (!session) {
+    return <button onClick={() => signIn()}>Sign In</button>
+  }
+
+  return (
+    <div>
+      <p>Welcome, {session.user.email}</p>
+      <button onClick={() => signOut()}>Sign Out</button>
+    </div>
+  )
+}
+```
+
+## JWT Tokens
+
+For stateless authentication, use JWT tokens:
+
+```typescript
+import jwt from 'jsonwebtoken'
+
+const SECRET = process.env.JWT_SECRET
+
+export function generateToken(payload: object) {
+  return jwt.sign(payload, SECRET, { expiresIn: '7d' })
+}
+
+export function verifyToken(token: string) {
+  try {
+    return jwt.verify(token, SECRET)
+  } catch {
+    return null
+  }
+}
+```
+
+## Security Best Practices
+
+1. **Always use HTTPS** in production
+2. **Store secrets in environment variables**
+3. **Use httpOnly cookies** for tokens
+4. **Implement rate limiting** on login endpoints
+5. **Hash passwords** with bcrypt
+6. **Validate all inputs** on the server
+
+```typescript
+import bcrypt from 'bcrypt'
+
+export async function hashPassword(password: string) {
+  return bcrypt.hash(password, 10)
+}
+
+export async function verifyPassword(password: string, hash: string) {
+  return bcrypt.compare(password, hash)
+}
+```
+
+Proper authentication protects both your users and your application!

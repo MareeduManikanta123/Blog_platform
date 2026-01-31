@@ -1,0 +1,105 @@
+---
+title: "Building API Routes in Next.js 14"
+date: "2024-01-20"
+author: "Sarah Chen"
+tags: ["Next.js", "API Routes", "Backend", "REST"]
+excerpt: "Learn how to build powerful backend APIs directly in your Next.js application using the App Router's API routes feature."
+---
+
+# Building API Routes in Next.js 14
+
+API routes are one of the most powerful features of Next.js. They allow you to build a complete backend within your Next.js application without needing a separate server.
+
+## Creating Your First API Route
+
+To create an API route, simply create a file in the `app/api` directory:
+
+```typescript
+// app/api/hello/route.ts
+export async function GET(request: Request) {
+  return Response.json({ message: "Hello, World!" })
+}
+```
+
+## HTTP Methods
+
+Next.js supports all standard HTTP methods:
+
+```typescript
+export async function GET(request: Request) {
+  // Handle GET requests
+}
+
+export async function POST(request: Request) {
+  // Handle POST requests
+  const body = await request.json()
+  return Response.json({ success: true })
+}
+
+export async function PUT(request: Request) {
+  // Handle PUT requests
+}
+
+export async function DELETE(request: Request) {
+  // Handle DELETE requests
+}
+```
+
+## Working with Query Parameters
+
+```typescript
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id
+  // Use the id to fetch data
+  return Response.json({ id })
+}
+```
+
+## Error Handling
+
+Always handle errors gracefully in your API routes:
+
+```typescript
+export async function POST(request: Request) {
+  try {
+    const data = await request.json()
+    // Process data
+    return Response.json({ success: true }, { status: 200 })
+  } catch (error) {
+    return Response.json(
+      { error: "Invalid request" },
+      { status: 400 }
+    )
+  }
+}
+```
+
+## Middleware for API Routes
+
+Use middleware to protect your API routes:
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  const token = request.headers.get('authorization')
+  
+  if (!token) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
+  
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: '/api/:path*',
+}
+```
+
+API routes make it easy to add backend functionality to your Next.js applications!

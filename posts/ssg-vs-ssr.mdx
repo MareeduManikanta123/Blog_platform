@@ -1,0 +1,77 @@
+---
+title: 'Understanding Static Site Generation vs Server-Side Rendering'
+date: '2024-01-22'
+author: 'Jane Smith'
+tags: ['Next.js', 'SSG', 'Performance']
+excerpt: 'Explore the differences between Static Site Generation and Server-Side Rendering, and learn when to use each approach for optimal performance.'
+---
+
+# Understanding Static Site Generation vs Server-Side Rendering
+
+When building web applications, choosing the right rendering strategy is crucial for performance and user experience. Let's explore SSG and SSR in detail.
+
+## Static Site Generation (SSG)
+
+SSG generates HTML pages at **build time**. This means:
+- Pages are pre-rendered during the build process
+- Extremely fast page loads (< 100ms)
+- Perfect for content-heavy sites like blogs
+- SEO-friendly out of the box
+
+### SSG Example
+
+```typescript
+export async function getStaticProps() {
+  const posts = await getPosts();
+  return {
+    props: { posts },
+    revalidate: 3600, // Revalidate every hour
+  };
+}
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return {
+    paths: posts.map(post => ({ params: { slug: post.slug } })),
+    fallback: 'blocking',
+  };
+}
+```
+
+## Server-Side Rendering (SSR)
+
+SSR generates pages on each request. This means:
+- Pages are generated when a user requests them
+- Better for dynamic content
+- Slightly slower initial load times
+- Always fresh content
+
+### SSR Example
+
+```typescript
+export async function getServerSideProps() {
+  const data = await fetchData();
+  return { props: { data } };
+}
+```
+
+## Choosing Between SSG and SSR
+
+| Feature | SSG | SSR |
+|---------|-----|-----|
+| Build Time | Longer | Shorter |
+| Page Load Speed | Fastest | Slower |
+| Content Freshness | Revalidation needed | Always fresh |
+| Best For | Blogs, Documentation | Dynamic content |
+| Cost | Lower (CDN) | Higher (servers) |
+
+## Best Practices
+
+1. **Use SSG for content that doesn't change frequently** - blogs, documentation
+2. **Use SSR for real-time data** - user dashboards, personalized content
+3. **Use Incremental Static Regeneration (ISR)** - the best of both worlds
+4. **Combine both strategies** - use SSG for most pages and SSR where needed
+
+## Conclusion
+
+Both SSG and SSR have their place in modern web development. By understanding when to use each, you can build lightning-fast, user-friendly applications that scale efficiently.

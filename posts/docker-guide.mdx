@@ -1,0 +1,120 @@
+---
+title: 'Docker and Containerization for Web Developers'
+date: '2024-01-15'
+author: 'Mike Wilson'
+tags: ['Docker', 'DevOps', 'Containerization']
+excerpt: 'Learn how Docker containerization can improve your development workflow and deployment process. A comprehensive guide for web developers.'
+---
+
+# Docker and Containerization for Web Developers
+
+Docker has become an essential tool in modern web development. It solves the "works on my machine" problem by containerizing your entire application environment.
+
+## What is Docker?
+
+Docker is a containerization platform that packages your application, dependencies, and configuration into a single unit called a **container**. This ensures your app runs the same everywhere.
+
+## Why Use Docker?
+
+1. **Consistency**: Same environment across development, testing, and production
+2. **Isolation**: Dependencies don't conflict with other projects
+3. **Scalability**: Easy to deploy multiple instances
+4. **Version Control**: Track changes to your application environment
+5. **Collaboration**: Team members work with identical setups
+
+## Basic Docker Concepts
+
+### Images
+A Docker image is a blueprint for creating containers. It contains:
+- Base operating system
+- Application code
+- Dependencies
+- Environment variables
+
+### Containers
+A container is a running instance of an image. It's lightweight and fast.
+
+## Creating a Dockerfile
+
+```dockerfile
+# Use Node.js as the base image
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Run the application
+CMD ["npm", "start"]
+```
+
+## Docker Compose
+
+Docker Compose allows you to define and run multi-container applications.
+
+```yaml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+
+  database:
+    image: postgres:15
+    environment:
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
+```
+
+## Common Docker Commands
+
+```bash
+# Build an image
+docker build -t my-app:1.0 .
+
+# Run a container
+docker run -p 3000:3000 my-app:1.0
+
+# List running containers
+docker ps
+
+# Stop a container
+docker stop container_id
+
+# View logs
+docker logs container_id
+
+# Execute command in container
+docker exec -it container_id bash
+```
+
+## Best Practices
+
+1. **Use specific base image tags** - Not `latest`
+2. **Minimize layer size** - Each command creates a layer
+3. **Use multi-stage builds** - For smaller production images
+4. **Don't run as root** - For security
+5. **Use .dockerignore** - Similar to .gitignore
+
+## Conclusion
+
+Docker has revolutionized how developers build and deploy applications. Mastering it is essential for modern web development.

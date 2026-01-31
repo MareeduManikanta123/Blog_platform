@@ -1,0 +1,177 @@
+---
+title: "Database Integration with Next.js and Prisma"
+date: "2024-01-12"
+author: "James Wilson"
+tags: ["Database", "Prisma", "ORM", "Data"]
+excerpt: "Learn how to integrate a database into your Next.js application using Prisma ORM for type-safe database access."
+---
+
+# Database Integration with Next.js and Prisma
+
+Prisma is a modern ORM that makes database integration simple and type-safe. Let's set it up in your Next.js application.
+
+## Installation and Setup
+
+```bash
+npm install @prisma/client
+npm install -D prisma
+npx prisma init
+```
+
+This creates a `.env.local` file and a `prisma/schema.prisma` file.
+
+## Defining Your Data Model
+
+```prisma
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Post {
+  id        Int     @id @default(autoincrement())
+  slug      String  @unique
+  title     String
+  content   String
+  published Boolean @default(false)
+  author    User?   @relation(fields: [authorId], references: [id])
+  authorId  Int?
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+```
+
+## Database Operations
+
+Create a Prisma client instance:
+
+```typescript
+// lib/prisma.ts
+import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query'],
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+```
+
+### Reading Data
+
+```typescript
+// Get all posts
+const posts = await prisma.post.findMany()
+
+// Get by ID
+const post = await prisma.post.findUnique({
+  where: { id: 1 }
+})
+
+// Get with relations
+const author = await prisma.user.findUnique({
+  where: { id: 1 },
+  include: { posts: true }
+})
+```
+
+### Creating Data
+
+```typescript
+const newPost = await prisma.post.create({
+  data: {
+    slug: 'my-post',
+    title: 'My First Post',
+    content: 'Content here',
+    author: {
+      connect: { id: 1 }
+    }
+  }
+})
+```
+
+### Updating Data
+
+```typescript
+const updated = await prisma.post.update({
+  where: { id: 1 },
+  data: {
+    title: 'Updated Title',
+    published: true
+  }
+})
+```
+
+### Deleting Data
+
+```typescript
+await prisma.post.delete({
+  where: { id: 1 }
+})
+```
+
+## Using in API Routes
+
+```typescript
+// app/api/posts/route.ts
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET() {
+  const posts = await prisma.post.findMany({
+    include: { author: true }
+  })
+  return NextResponse.json(posts)
+}
+
+export async function POST(request: NextRequest) {
+  const data = await request.json()
+  const post = await prisma.post.create({
+    data
+  })
+  return NextResponse.json(post)
+}
+```
+
+## Migrations
+
+Track your database changes with migrations:
+
+```bash
+# Create a new migration
+npx prisma migrate dev --name add_posts_table
+
+# Deploy migrations to production
+npx prisma migrate deploy
+
+# View migration status
+npx prisma migrate status
+```
+
+## Type Safety
+
+Prisma generates TypeScript types automatically:
+
+```typescript
+import { Post, User } from '@prisma/client'
+
+const handlePost = (post: Post) => {
+  console.log(post.title) // Fully typed!
+}
+```
+
+Prisma makes database operations intuitive and type-safe!
